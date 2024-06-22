@@ -14,6 +14,13 @@ def log_info(message):
 def log_error(message):
     logging.error(message)
 
+# 檢查命令行參數
+if len(sys.argv) != 2:
+    log_error("Please provide the file name as a command line argument.")
+    sys.exit(1)
+
+file_name = sys.argv[1]
+
 with open("pcap.txt", "r", encoding="utf-8") as f:
     pcap = f.read().split('\n')
 
@@ -33,13 +40,13 @@ with open("black_list.txt", "r", encoding="utf-8") as bl:
 result = list(set(final_list) & set(black_list))
 if len(result) != 0:
     with open("result.txt", "a+") as result_file:
-        result_content = ""
-        for i in range(len(result)):
-            result_content += "\t" + result[i] + '\n'
+        result_content = f"File: {file_name}\n"
+        for ip in result:
+            result_content += f"\t{ip}\n"
         result_file.write(result_content)
-    log_info("Malicious IP addresses found and saved in result.txt")
+    log_info(f"Malicious IP addresses found in {file_name} and saved in result.txt")
 else:
-    log_info("No malicious IP addresses found")
+    log_info(f"No malicious IP addresses found in {file_name}")
 
 with open("conversation_list.txt", "a+") as final_file:
     final_content = "\n".join(final_list) + '\n'

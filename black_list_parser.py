@@ -12,7 +12,7 @@ def log_info(message):
 def log_error(message):
     logging.error(message)
     
-df = pd.read_excel(r'/home/kali/pcap_analyser/blacklist.xlsx')
+df = pd.read_excel(r'/home/kali/Testing/pcap_analyser/blacklist.xlsx')
 
 blacklist = []
 for i in range(len(df.values) - 1):

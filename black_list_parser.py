@@ -1,5 +1,7 @@
 import pandas as pd
 import logging
+import sys
+import os
 
 LOG_FILE = "pcap_analyser.log"
 
@@ -11,8 +13,15 @@ def log_info(message):
 
 def log_error(message):
     logging.error(message)
-    
-df = pd.read_excel(r'/home/kali/Testing/pcap_analyser/blacklist.xlsx')
+
+if len(sys.argv) != 2:
+    log_error("Please provide the current directory as a command line argument.")
+    sys.exit(1)
+
+current_dir = sys.argv[1]
+blacklist_file = os.path.join(current_dir, "blacklist.xlsx")
+
+df = pd.read_excel(blacklist_file)
 
 blacklist = []
 for i in range(len(df.values) - 1):

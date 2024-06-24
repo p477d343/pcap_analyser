@@ -13,67 +13,64 @@ function log_error() {
     echo "[ERROR] $1" >> "$LOG_FILE"
 }
 
-function startfunc() {
-    read -p "Please enter your pcap path:" PCAP_PATH
-    log_info "Your pcap path is $PCAP_PATH"
-    read -p "Is this path correct?[y/n]:" yesorno
-    if [[ $yesorno = "y" ]]; then
-        cd "$PCAP_PATH" || { log_error "Unable to change directory to $PCAP_PATH"; exit 1; }
-        confirm=true
-    else
-        confirm=false
-    fi
-}
-
 function analyse() {
     tshark -r "$entry" -qz conv,ip > pcap.txt
     log_info "Analyzing file: $entry"
-    #echo "File name:\"$entry\" contain following malicious ip address:" >> result.txt
     python3 "$CURRENT_DIR/pcap_analyser.py" "$entry">> "$LOG_FILE" 2>&1
     rm pcap.txt
     echo "File name:\"$entry\" is done!!!"
     echo "$entry" >> pcaplist
 }
 
-log_info "Following ip address has packet conversation with victim machine:" > result.txt
-confirmval=true
+if [[ $# -ne 1 ]]; then
+    log_error "Please provide the pcap directory as a command line argument."
+    exit 1
+fi
 
-while [[ "$confirmval" != false ]]; do
-    confirm=true
-    startfunc
-    echo "" > pcaplist
-    echo "" > result.txt
-    echo "" > conversation_list.txt
-    if [[ $confirm != false ]]; then
-        log_info "Analyzing pcap files in directory: $PCAP_PATH"
-        start_time=$(date +%Y-%m-%d\ %H:%M:%S)
-        log_info "Scan started at: $start_time"
-        python3 "$CURRENT_DIR/black_list_parser.py" >> "$LOG_FILE" 2>&1
-        while IFS= read -r -d '' entry; do
-            analyse
-        done < <(find "$PCAP_PATH" -type f -name "*.pcap" -print0)
-        confirmval=false
-        end_time=$(date +%Y-%m-%d\ %H:%M:%S)
-        log_info "Scan completed at: $end_time"
-        scanned_files=$(cat pcaplist | wc -l)
-        log_info "Number of files scanned: $scanned_files"
-        unique_ips=$(cat conversation_list.txt | wc -l)
-        log_info "Number of unique IPs found: $unique_ips"
-		malicious_ips=$(grep -oP '^\s+\K\S+' result.txt | sort | wc -l)
-	    if [[ $malicious_ips -gt 0 ]]; then
-	    	log_info "Number of malicious IPs found: $malicious_ips"
-	        log_info "Malicious IPs found:"
-	        sed '1d' result.txt | cat
-	    else
-	        log_info "No malicious IP addresses found"
-	    fi
-        rm pcaplist
-    else
-        log_info "Retype your pcap path"
-        break
-    fi
-done
+PCAP_PATH="$1"
+cd "$PCAP_PATH" 
+if [[ ! -d "$PCAP_PATH" ]]; then
+    log_error "The provided path is not a valid directory: $PCAP_PATH"
+    exit 1
+fi
+
+log_info "Following ip address has packet conversation with victim machine:" > result.txt
+log_info "Analyzing pcap files in directory: $PCAP_PATH"
+
+start_time=$(date +%Y-%m-%d\ %H:%M:%S)
+log_info "Scan started at: $start_time"
+
+echo "" > pcaplist
+echo "" > result.txt
+echo "" > conversation_list.txt
+
+python3 "$CURRENT_DIR/black_list_parser.py" "$CURRENT_DIR" >> "$LOG_FILE" 2>&1
+
+while IFS= read -r -d '' entry; do
+    analyse
+done < <(find "$PCAP_PATH" -type f -name "*.pcap" -print0)
+
+end_time=$(date +%Y-%m-%d\ %H:%M:%S)
+log_info "Scan completed at: $end_time"
+scanned_files=$(sed -i '1d' pcaplist  && cat pcaplist | wc -l)
+log_info "Number of files scanned: $scanned_files"
 
 python3 "$CURRENT_DIR/conversation_parser.py" >> "$LOG_FILE" 2>&1
-cd "$PCAP_PATH" && rm black_list.txt && rm ip_count.csv
+unique_ips=$(sed -i '1d' conversation_list.txt && cat conversation_list.txt | wc -l)
+log_info "Number of unique IPs found: $unique_ips"
+
+malicious_ips=$(grep -oP '^\s+\K\S+' result.txt | sort | wc -l)
+if [[ $malicious_ips -gt 0 ]]; then
+    log_info "Number of malicious IPs found: $malicious_ips"
+    log_info "Malicious IPs found:"
+    sed '1d' "$PCAP_PATH/result.txt" | cat
+    sed '1d' "$PCAP_PATH/result.txt" | cat >> "$LOG_FILE" 2>&1
+
+else
+    log_info "No malicious IP addresses found"
+fi
+
 log_info "Pcap analysis completed!"
+log_info "Pcap analysis log have been saved in $PCAP_PATH/pcap_analyser.log"
+cd "$PCAP_PATH" && rm black_list.txt && rm ip_count.csv && rm pcaplist && rm result.txt
+mkdir "$PCAP_PATH/AnalyzingResult" && mv "$PCAP_PATH/conversation_list.txt" "$PCAP_PATH/AnalyzingResult" && mv "$PCAP_PATH/pcap_analyser.log" "$PCAP_PATH/AnalyzingResult"

@@ -2,6 +2,14 @@
 
 The PCAP Analyzer is a tool for analyzing PCAP (packet capture) files to identify malicious IP addresses and generate various reports.
 
+## Features
+
+- Analyzes PCAP files in a specified directory
+- Identifies malicious IP addresses based on a provided blacklist and the stamparm/ipsum threat intelligence feed
+- Generates a list of unique IP addresses found in the PCAP files
+- Provides a summary of the analysis results, including the number of scanned files, malicious IPs found, and unique IPs found
+- Logs detailed information about the analysis process for better transparency and debugging
+
 ## Prerequisites
 
 - Python 3.x
@@ -27,14 +35,38 @@ The PCAP Analyzer is a tool for analyzing PCAP (packet capture) files to identif
 
    Replace `/path/to/pcap/directory` with the actual path to the directory containing the PCAP files you want to analyze.
 
-4. The script will analyze each PCAP file in the specified directory and generate the following files:
+4. The script will analyze each PCAP file in the specified directory and generate the following files in the `AnalyzingResult` directory:
 
    - `conversation_list.txt`: A list of unique IP addresses found in the PCAP files.
-   - `ip_count.csv`: A CSV file containing the count of each IP address.
-   - `result.txt`: A file containing the malicious IP addresses found in the PCAP files.
    - `pcap_analyser.log`: A log file containing detailed information about the analysis process.
 
-5. After the analysis is complete, the script will move the `conversation_list.txt` and `pcap_analyser.log` files to a new directory named `AnalyzingResult` within the PCAP directory.
+5. After the analysis is complete, the script will display a summary of the results, including:
+
+   - Number of known blacklisted IPs
+   - Number of scanned files
+   - Number of malicious IPs found
+   - Number of unique IPs found
+   - Size of the analyzed PCAP files
+   - Analysis duration
+
+6. The script will also create a zip file named `AnalyzingResult.zip` in the PCAP directory, containing the `AnalyzingResult` directory for easy sharing and distribution of the analysis results.
+
+## Integration with stamparm/ipsum
+
+This project integrates the [stamparm/ipsum](https://github.com/stamparm/ipsum) threat intelligence feed to enhance the malicious IP detection capabilities. The ipsum repository provides a daily updated list of suspicious and malicious IP addresses sourced from over 30 different public blacklists.
+
+During the analysis process, the script fetches the latest ipsum IP list and combines it with the provided `blacklist.xlsx` file. This significantly expands the coverage of potentially malicious IPs.
+
+### Customization
+
+By default, the script uses the ipsum.txt file, which includes all IPs from the ipsum feed. If you prefer to use a different level of IP list (e.g., only IPs found on 3 or more blacklists), you can modify the following line in the `pcap_analyser.sh` script:
+
+```bash
+curl --compressed https://raw.githubusercontent.com/stamparm/ipsum/master/ipsum.txt 2>/dev/null | grep -v "#" | grep -v -E "\s[0]$" | cut -f 1 >> "$PCAP_PATH/black_list.txt"
+```
+
+Replace `"\s[0]$`(using level 1~10,) with the desired level file (e.g., `"\s[1-2]$"`:using level 3~10).
+Greater the number, lesser the chance of false positive detection and/or dropping in (inbound) monitored traffic
 
 ## Scripts
 
@@ -45,7 +77,7 @@ The PCAP Analyzer is a tool for analyzing PCAP (packet capture) files to identif
 
 ## Logging
 
-The PCAP Analyzer uses the Python logging module to log information and errors during the analysis process. The log messages are written to the `pcap_analyser.log` file.
+The PCAP Analyzer uses the Python logging module to log information and errors during the analysis process. The log messages are written to the `pcap_analyser.log` file, which can be found in the `AnalyzingResult` directory after the analysis is complete.
 
 ## Dependencies
 
@@ -63,4 +95,3 @@ Contributions to the PCAP Analyzer project are welcome! If you find any issues o
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
-

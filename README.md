@@ -65,7 +65,7 @@ By default, the script uses the ipsum.txt file, which includes all IPs from the 
 curl --compressed https://raw.githubusercontent.com/stamparm/ipsum/master/ipsum.txt 2>/dev/null | grep -v "#" | grep -v -E "\s[0]$" | cut -f 1 >> "$PCAP_PATH/black_list.txt"
 ```
 
-Replace `"\s[0]$`(using level 1~10,) with the desired level file (e.g., `"\s[1-2]$"`:using level 3~10).
+Replace `"\s[0]$`(using level 1 to 10,) with the desired level file (e.g., `"\s[1-2]$"`:using level 3 to 10).
 Greater the number, lesser the chance of false positive detection and/or dropping in (inbound) monitored traffic
 
 ## Scripts

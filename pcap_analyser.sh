@@ -45,7 +45,7 @@ echo "" > result.txt
 echo "" > conversation_list.txt
 
 python3 "$CURRENT_DIR/black_list_parser.py" "$CURRENT_DIR" >> "$LOG_FILE" 2>&1
-
+curl --compressed https://raw.githubusercontent.com/stamparm/ipsum/master/ipsum.txt 2>/dev/null | grep -v "#" | grep -v -E "\s[1-2]$" | cut -f 1 >> "$PCAP_PATH/black_list.txt"
 while IFS= read -r -d '' entry; do
     analyse
 done < <(find "$PCAP_PATH" -type f -name "*.pcap" -print0)

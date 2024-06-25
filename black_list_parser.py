@@ -24,7 +24,7 @@ blacklist_file = os.path.join(current_dir, "blacklist.xlsx")
 df = pd.read_excel(blacklist_file)
 
 blacklist = []
-for i in range(len(df.values) - 1):
+for i in range(len(df.values)):
     blacklist.append(str(df.values[i]).replace("'", "").replace("[", "").replace("]", ""))
 
 black_list = list(set(blacklist))

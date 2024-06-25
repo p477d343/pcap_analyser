@@ -53,8 +53,3 @@ with open("conversation_list.txt", "a+") as final_file:
     final_file.write(final_content)
 
 log_info("IP addresses have been saved in conversation_list.txt")
-
-df = pd.DataFrame(ip_list, columns=['IP Address'])
-ip_count = df['IP Address'].value_counts()
-ip_count.to_csv("ip_count.csv")
-log_info("IP address count has been saved in ip_count.csv")
